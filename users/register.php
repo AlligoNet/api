@@ -6,7 +6,7 @@
 		$password = $_POST['password']; 
 		$email = $_POST['email'];
 		$searchUser = $conn->prepare("SELECT * FROM users WHERE username=? OR useremail=?");
-		$searchUser->bind_param("ss", $username, $useremail);
+		$searchUser->bind_param("ss", $username, $email);
 		$searchUser->execute();
 		$userFind = $searchUser->get_result();
 		$searchUser->close();
