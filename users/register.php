@@ -1,7 +1,6 @@
 <?php
 	ini_set('display_errors', 1); error_reporting(E_ALL);
 	include 'dbInit.php';
-	include 'clean.php';
 	function action($conn){
 		$username = $_POST['user'];
 		$password = $_POST['password']; 
@@ -26,23 +25,25 @@
 			//user and email not found, continue
 			
 			//check that username and email are valid
-			if($username !== clean($username) || empty($username)){
+			if($username !== htmlspecialchars(stripslashes(trim($username))) || empty($username)){
 				$json['status'] = 'invalidname';
 				echo json_encode($json);
 			}
-			elseif($email !== clean($email)  || !filter_var($email, FILTER_VALIDATE_EMAIL)){
+			elseif($email !== htmlspecialchars(stripslashes(trim($email)))  || !filter_var($email, FILTER_VALIDATE_EMAIL)){
 				$json['status'] = 'invalidemail';
 				echo json_encode($json);
 			}
 			else{
 				//generate password hash
-				$pwhash = password_hash($userResult['password'], PASSWORD_BCRYPT);
+				$pwhash = password_hash($password, PASSWORD_BCRYPT);
 				//generate session key
 				$session = md5(($username . time()));
 				//insert into user and email tables
 				$insertUser = $conn->prepare('INSERT INTO users (username, password, useremail, sessionkey) VALUES (?, ?, ?, ?)');
 				$insertUser->bind_param("ssss", $username, $pwhash, $email, $session);
 				$insertStatus = $insertUser->execute();
+				echo $insertUser->error;
+				echo $conn->error;
 				$insertUser->close();
 				 
 				if($insertStatus === false){
@@ -59,5 +60,4 @@
 			}
 		}		
 	}
-
 ?>
