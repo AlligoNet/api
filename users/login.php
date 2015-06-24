@@ -1,5 +1,9 @@
 <?php
-	function login($username, $password, $conn){
+	ini_set('display_errors', 1); error_reporting(E_ALL);
+	include 'dbInit.php';
+	function action($conn){
+		$username = $_POST['user'];
+		$password = $_POST['password']; 
 		$searchUser = $conn->prepare("SELECT * FROM users WHERE username=?");
 		$searchUser->bind_param("s", $username);
 		$searchUser->execute();
@@ -7,7 +11,8 @@
 		$searchUser->close();
 		if($userFind->num_rows === 0){
 			//user does not exist
-			json('nouser', '');
+			$json['status'] = 'nouser';
+			echo json_encode($json);
 		}
 		else{
 			//user found
@@ -16,7 +21,7 @@
 			//verify password
 			if(password_verify($password , $pwresult)){
 				//generate session key
-				$session = [redacted];
+				$session = md5(($username . time()));
 				//store in database
 				$updateKey = $conn->prepare("UPDATE users SET sessionkey=? WHERE username=?");
 				$updateKey->bind_param("ss", $session, $username);
@@ -25,23 +30,23 @@
 				$updateKey->close();
 				//session created, we're done here.
 				if($updatestatus === false){
-					json('dbfailure', '');
+					$json['status'] = 'dbfailure';
+					echo json_encode($json);
 				}
 				else{
-					json('success', $session);			
+					$json['status'] = 'success';
+					$json['session'] = $session;
+					echo json_encode($json);	
 				}
 				
 			}
 			else{
 				//password is incorrect
-				json('wrongpass', '');
+				$json['status'] = 'wrongpass';
+				echo json_encode($json);
 			}
 		}
 		
 	}
-	function json($status, $session){
-		$json['status'] = $status;
-		$json['session'] = $session;
-		echo json_encode($json);
-	}
+
 ?>
